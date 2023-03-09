@@ -1,0 +1,41 @@
+package com.example.nisum.webfluxmongodb.zipping.controller;
+
+import com.example.nisum.webfluxmongodb.zipping.DTO.DepartmentEmployeeDto;
+import com.example.nisum.webfluxmongodb.zipping.model.Department;
+import com.example.nisum.webfluxmongodb.zipping.service.DepartmentService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+@RestController
+@RequestMapping("/api/dept")
+public class DepartmentController {
+
+    @Autowired
+    private DepartmentService departmentService;
+
+    @RequestMapping("/save")
+    private Mono<Department> save(@RequestBody Department department) {
+        return departmentService.save(department);
+    }
+
+    @RequestMapping("/get")
+    private Flux<Department> getAll() {
+        return departmentService.getAll();
+    }
+
+    @RequestMapping("/get/{orgId}")
+    private Flux<Department> getByOrgId(@PathVariable int orgId){
+    return departmentService.findByOrganizationId(orgId);
+    }
+
+    //Get Department by Id
+    @RequestMapping("/get/{deptId}")
+    private Mono<DepartmentEmployeeDto> findByDepartmentId(@PathVariable int id){
+      return  departmentService.findById(id);
+    }
+}
