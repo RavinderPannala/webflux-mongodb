@@ -1,18 +1,15 @@
 package com.example.nisum.webfluxmongodb.zipping.service;
 
 import com.example.nisum.webfluxmongodb.zipping.DTO.DepartmentEmployeeDto;
-import com.example.nisum.webfluxmongodb.zipping.Exception.ResourceNotFoundException;
 import com.example.nisum.webfluxmongodb.zipping.model.Department;
 import com.example.nisum.webfluxmongodb.zipping.model.Employee;
 import com.example.nisum.webfluxmongodb.zipping.repository.DepartmentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -37,19 +34,42 @@ public class DepartmentService {
     }
 
     public Mono<DepartmentEmployeeDto> findById(int id) {
-        List<Employee> employees = new ArrayList<>();
-        Mono<DepartmentEmployeeDto> map = departmentRepository
-                .findById(id).zipWhen(dept -> {
-                    Flux<Employee> employeeFlux = employeeService.findByDepartmentId(dept.getId()).switchIfEmpty(Flux.just(new Employee()));
+        Mono<DepartmentEmployeeDto> map = departmentRepository.findById(id).zipWhen(dept -> employeeService.findByDepartmentId(dept.getId()).collectList()).map(tuple -> {
+            DepartmentEmployeeDto departmentEmployeeDto = new DepartmentEmployeeDto();
+            Department dept = tuple.getT1();
+            List<Employee> employeeList = tuple.getT2();
+            departmentEmployeeDto.setName(dept.getName());
+            departmentEmployeeDto.setEmployeeList(employeeList);
+            return departmentEmployeeDto;
+        });
+        return map;
+    }
+
+    public Flux<DepartmentEmployeeDto> findAllDepartmentEmployees() {
+        Flux<DepartmentEmployeeDto> map = departmentRepository.findAll().flatMap(this::apply)
+                .map(tuple -> {
                     DepartmentEmployeeDto departmentEmployeeDto = new DepartmentEmployeeDto();
-                    departmentEmployeeDto.setName(dept.getName());
-                    employeeFlux.collectList().subscribe(employees::addAll);
-                    departmentEmployeeDto.setEmployeeList(employees);
-                    return Mono.just(departmentEmployeeDto);
-                }).switchIfEmpty(Mono.error(new ResourceNotFoundException("Department id not found"))).map(tuple -> {
-                    DepartmentEmployeeDto t2 = tuple.getT2();
-                    return t2;
+                    departmentEmployeeDto.setName(tuple.getT1().getName());
+                    departmentEmployeeDto.setEmployeeList(tuple.getT2());
+                    return departmentEmployeeDto;
                 });
         return map;
+    }
+
+    private Mono<Tuple2<Department, List<Employee>>> apply(Department department) {
+        return Mono.just(department)
+                .zipWith(employeeService.getAll().filter(it -> it.getDepartmentId() == department.getId()).collectList())
+                .map(tuple -> {
+                    tuple.getT1().setEmployees(tuple.getT2());
+                    return tuple;
+                });
+    }
+
+    public Mono<Void> deleteDepartment(Department dept) {
+        return departmentRepository.delete(dept);
+    }
+
+    public Mono<Void> delete(Flux<Department> departmentFlux) {
+        return departmentRepository.deleteAll(departmentFlux);
     }
 }

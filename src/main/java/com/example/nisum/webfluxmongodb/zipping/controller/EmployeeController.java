@@ -28,12 +28,12 @@ public class EmployeeController {
     }
 
 
-    @RequestMapping("/get/{orgId}")
+    @RequestMapping("/get/org/{orgId}")
     private Flux<Employee> findByOrganizationId(@PathVariable int orgId) {
         return employeeService.findByOrganizationId(orgId);
     }
 
-    @RequestMapping("/get/{Id}")
+    @RequestMapping("/get/dept/{departmentId}")
     private Flux<Employee> findByDepartmentId(@PathVariable int departmentId) {
         return employeeService.findByDepartmentId(departmentId);
     }

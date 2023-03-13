@@ -22,10 +22,19 @@ public class EmployeeService {
     }
 
     public Flux<Employee> findByOrganizationId(int orgId) {
-        return employeeRepository.findByOrganizationId(orgId);
+        Flux<Employee> employeeFlux = employeeRepository.findByOrganizationId(orgId);
+        return employeeFlux;
     }
 
     public Flux<Employee> findByDepartmentId(int departmentId) {
         return employeeRepository.findByDepartmentId(departmentId);
+    }
+
+    public Mono<Void> deleteEmployee(Employee emp) {
+        return employeeRepository.delete(emp);
+    }
+
+    public Mono<Void> delete(Flux<Employee> employeeFlux) {
+        return employeeRepository.deleteAll(employeeFlux);
     }
 }

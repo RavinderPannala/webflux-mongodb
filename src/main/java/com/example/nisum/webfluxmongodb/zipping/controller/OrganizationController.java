@@ -1,17 +1,12 @@
 package com.example.nisum.webfluxmongodb.zipping.controller;
 
+import com.example.nisum.webfluxmongodb.zipping.DTO.OrgEmployeeDTO;
 import com.example.nisum.webfluxmongodb.zipping.Exception.ResourceNotFoundException;
-import com.example.nisum.webfluxmongodb.zipping.model.Employee;
 import com.example.nisum.webfluxmongodb.zipping.model.Organization;
-import com.example.nisum.webfluxmongodb.zipping.service.EmployeeService;
 import com.example.nisum.webfluxmongodb.zipping.service.OrganizationService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.aggregation.BooleanOperators;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.ResourceAccessException;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -32,10 +27,22 @@ public class OrganizationController {
         return organizationService.getAll();
     }
 
-    @RequestMapping("/get/{id}")
+    //Get All employees based on Organization Id
+    @GetMapping("/get/{id}")
     private Mono<Organization> findById(@PathVariable int id) {
         Mono<Organization> organizationMono = organizationService.findById(id);
         organizationMono.switchIfEmpty(Mono.error(new ResourceNotFoundException("Resource not found")));
         return organizationMono;
+    }
+
+    //Get ALl EMployees by OrganizationName
+    @GetMapping("/getByName/{name}")
+    private Mono<OrgEmployeeDTO> findByOrgName(@PathVariable String name){
+       return organizationService.findByOrgName(name);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    private Mono<ResponseEntity<Void>> delete(@PathVariable int id){
+        return organizationService.deleteById(id);
     }
 }
